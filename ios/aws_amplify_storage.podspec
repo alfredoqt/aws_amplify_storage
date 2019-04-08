@@ -15,6 +15,9 @@ A new flutter plugin project.
   s.source_files = 'Classes/**/*'
   s.public_header_files = 'Classes/**/*.h'
   s.dependency 'Flutter'
+  s.dependency 'AWSCore', '~> 2.9.0'
+  s.dependency 'AWSS3', '~> 2.9.0'
+  s.dependency 'AWSMobileClient', '~> 2.9.0'
 
   s.ios.deployment_target = '8.0'
 end
