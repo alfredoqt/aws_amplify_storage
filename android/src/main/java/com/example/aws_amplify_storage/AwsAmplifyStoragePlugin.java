@@ -1,6 +1,7 @@
 package com.example.aws_amplify_storage;
 
 import android.content.Intent;
+import android.util.Log;
 
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
@@ -12,7 +13,6 @@ import com.amazonaws.mobile.client.AWSMobileClient;
 import com.amazonaws.mobile.client.Callback;
 import com.amazonaws.mobile.client.UserStateDetails;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferService;
-import com.amazonaws.mobileconnectors.s3.transferutility.TransferType;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferUtility;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferState;
 import com.amazonaws.mobileconnectors.s3.transferutility.TransferObserver;
@@ -20,10 +20,8 @@ import com.amazonaws.mobileconnectors.s3.transferutility.TransferListener;
 import com.amazonaws.services.s3.AmazonS3Client;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -31,6 +29,8 @@ import java.util.Map;
  * AwsAmplifyStoragePlugin
  */
 public class AwsAmplifyStoragePlugin implements MethodCallHandler {
+
+    private static String TAG = AwsAmplifyStoragePlugin.class.getSimpleName();
 
     private final Registrar mRegistrar;
     private final MethodChannel mChannel;
@@ -63,7 +63,7 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
 
             @Override
             public void onError(Exception e) {
-
+                Log.e(TAG, e.getLocalizedMessage());
             }
         });
 
@@ -84,23 +84,11 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
             case "pause":
                 handlePause(call, result);
                 break;
-            case "pauseAllWithType":
-                handlePauseAllWithType(call, result);
-                break;
             case "resume":
                 handleResume(call, result);
                 break;
-            case "resumeAllWithType":
-                handleResumeAllWithType(call, result);
-                break;
             case "cancel":
                 handleCancel(call, result);
-                break;
-            case "cancelAllWithType":
-                handleCancelAllWithType(call, result);
-                break;
-            case "startListeningTransferState":
-                handleStartListeningTransferState(call, result);
                 break;
             case "stopListeningTransferState":
                 handleStopListeningTransferState(call, result);
@@ -116,8 +104,10 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
         String bucket = arguments.get("bucket");
         String bucketKey = arguments.get("bucketKey");
         String pathname = arguments.get("pathname");
-        int id = mTransferUtility.upload(bucket, bucketKey, new File(pathname)).getId();
-        result.success(id);
+        final TransferObserver observer = mTransferUtility.upload(bucket, bucketKey, new File(pathname));
+
+        observer.setTransferListener(createTransferListener(observer));
+        result.success(observer.getId());
     }
 
     private void handleDownload(MethodCall call, Result result) {
@@ -125,8 +115,9 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
         String bucket = arguments.get("bucket");
         String bucketKey = arguments.get("bucketKey");
         String pathname = arguments.get("pathname");
-        int id = mTransferUtility.download(bucket, bucketKey, new File(pathname)).getId();
-        result.success(id);
+        final TransferObserver observer = mTransferUtility.download(bucket, bucketKey, new File(pathname));
+        observer.setTransferListener(createTransferListener(observer));
+        result.success(observer.getId());
     }
 
     private void handlePause(MethodCall call, Result result) {
@@ -134,28 +125,6 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
         int id = arguments.get("id");
         boolean paused = mTransferUtility.pause(id);
         result.success(paused);
-    }
-
-    private void handlePauseAllWithType(MethodCall call, Result result) {
-        Map<String, String> arguments = call.arguments();
-        String transferType = arguments.get("transferType");
-        switch (transferType) {
-            case "ANY":
-                mTransferUtility.pauseAllWithType(TransferType.ANY);
-                result.success(null);
-                break;
-            case "UPLOAD":
-                mTransferUtility.pauseAllWithType(TransferType.UPLOAD);
-                result.success(null);
-                break;
-            case "DOWNLOAD":
-                mTransferUtility.pauseAllWithType(TransferType.DOWNLOAD);
-                result.success(null);
-                break;
-            default:
-                result.notImplemented();
-                break;
-        }
     }
 
     private void handleResume(MethodCall call, Result result) {
@@ -169,28 +138,6 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
         result.success(null);
     }
 
-    private void handleResumeAllWithType(MethodCall call, Result result) {
-        Map<String, String> arguments = call.arguments();
-        String transferType = arguments.get("transferType");
-        switch (transferType) {
-            case "ANY":
-                result.success(getTransferObserverIds(mTransferUtility
-                        .resumeAllWithType(TransferType.ANY)));
-                break;
-            case "UPLOAD":
-                result.success(getTransferObserverIds(mTransferUtility
-                        .resumeAllWithType(TransferType.UPLOAD)));
-                break;
-            case "DOWNLOAD":
-                result.success(getTransferObserverIds(mTransferUtility
-                        .resumeAllWithType(TransferType.DOWNLOAD)));
-                break;
-            default:
-                result.notImplemented();
-                break;
-        }
-    }
-
     private void handleCancel(MethodCall call, Result result) {
         Map<String, Integer> arguments = call.arguments();
         int id = arguments.get("id");
@@ -198,86 +145,73 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
         result.success(cancelled);
     }
 
-    private void handleCancelAllWithType(MethodCall call, Result result) {
-        Map<String, String> arguments = call.arguments();
-        String transferType = arguments.get("transferType");
-        switch (transferType) {
-            case "ANY":
-                mTransferUtility.cancelAllWithType(TransferType.ANY);
-                result.success(null);
-                break;
-            case "UPLOAD":
-                mTransferUtility.cancelAllWithType(TransferType.UPLOAD);
-                result.success(null);
-                break;
-            case "DOWNLOAD":
-                mTransferUtility.cancelAllWithType(TransferType.DOWNLOAD);
-                result.success(null);
-                break;
-            default:
-                result.notImplemented();
-                break;
-        }
-    }
-
-    private void handleStartListeningTransferState(MethodCall call, final Result result) {
+    private void handleStopListeningTransferState(MethodCall call, Result result) {
         Map<String, Integer> arguments = call.arguments();
         int id = arguments.get("id");
-        final TransferObserver observer = mTransferUtility.getTransferById(id);
+        TransferObserver observer = mTransferUtility.getTransferById(id);
         if (observer == null) {
             result.success(null);
             return;
         }
-        TransferListener listener = new TransferListener() {
+        observer.cleanTransferListener();
+        result.success(observer.getId());
+    }
+
+    private int getTransferProgress(TransferObserver transferObserver) {
+        return (int) (transferObserver.getBytesTransferred() / transferObserver.getBytesTotal() * 100);
+    }
+
+    private TransferListener createTransferListener(final TransferObserver observer) {
+        return new TransferListener() {
             @Override
             public void onStateChanged(int id, TransferState state) {
                 Map<String, Object> map = new HashMap<>();
                 switch (state) {
                     /* A transfer is initially in WAITING state when added */
                     case WAITING:
-                        map.put("id", observer.getId());
+                        map.put("id", id);
                         map.put("transferState", "WAITING");
                         map.put("progress", getTransferProgress(observer));
                         mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
                         break;
                     /* It will turn into IN_PROGRESS once it starts */
                     case IN_PROGRESS:
-                        map.put("id", observer.getId());
+                        map.put("id", id);
                         map.put("transferState", "IN_PROGRESS");
                         map.put("progress", getTransferProgress(observer));
                         mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
                         break;
                     /* Customers can pause the transfer when needed and turns it into PAUSED */
                     case PAUSED:
-                        map.put("id", observer.getId());
+                        map.put("id", id);
                         map.put("transferState", "PAUSED");
                         map.put("progress", getTransferProgress(observer));
                         mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
                         break;
                     /* Customers can cancel the transfer when needed and turns it into CANCELED */
                     case CANCELED:
-                        map.put("id", observer.getId());
+                        map.put("id", id);
                         map.put("transferState", "CANCELED");
                         map.put("progress", getTransferProgress(observer));
                         mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
                         break;
                     /* Finally the transfer will succeed as COMPLETED */
                     case COMPLETED:
-                        map.put("id", observer.getId());
+                        map.put("id", id);
                         map.put("transferState", "COMPLETED");
                         map.put("progress", getTransferProgress(observer));
                         mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
                         break;
                     /* Finally the transfer will fail as FAILED */
                     case FAILED:
-                        map.put("id", observer.getId());
+                        map.put("id", id);
                         map.put("transferState", "FAILED");
                         map.put("progress", getTransferProgress(observer));
                         mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
                         break;
                     /* WAITING_FOR_NETWORK state may kick in for an active transfer when network is lost */
                     case WAITING_FOR_NETWORK:
-                        map.put("id", observer.getId());
+                        map.put("id", id);
                         map.put("transferState", "WAITING_FOR_NETWORK");
                         map.put("progress", getTransferProgress(observer));
                         mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
@@ -315,33 +249,5 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
                 mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
             }
         };
-        observer.setTransferListener(listener);
-        result.success(observer.getId());
-    }
-
-    private void handleStopListeningTransferState(MethodCall call, Result result) {
-        Map<String, Integer> arguments = call.arguments();
-        int id = arguments.get("id");
-        TransferObserver observer = mTransferUtility.getTransferById(id);
-        if (observer == null) {
-            result.success(null);
-            return;
-        }
-        observer.cleanTransferListener();
-        result.success(observer.getId());
-    }
-
-    private List<Integer> getTransferObserverIds(List<TransferObserver> observers) {
-        List<Integer> ids = new ArrayList<>();
-
-        for (TransferObserver observer : observers) {
-            ids.add(observer.getId());
-        }
-
-        return ids;
-    }
-
-    private int getTransferProgress(TransferObserver transferObserver) {
-        return (int) (transferObserver.getBytesTransferred() / transferObserver.getBytesTotal() * 100);
     }
 }

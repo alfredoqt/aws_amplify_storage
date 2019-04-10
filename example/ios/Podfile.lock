@@ -37,7 +37,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/flutter/ios-release"
 
 SPEC CHECKSUMS:
-  aws_amplify_storage: 77655377c2509b5aa3239d00c6eb32de28bc9101
+  aws_amplify_storage: 3c157e11de8d4fb53fd5f17007b8b3f0353f1099
   AWSAuthCore: 5509db7bfba74bdbc45cdb778d12560ad407d06c
   AWSCognitoIdentityProvider: b90896ca0b8f3963a1b698f458ff441f21d26142
   AWSCognitoIdentityProviderASF: f94f1a502e72ef3d0a1de93e10bf7a79c8698118

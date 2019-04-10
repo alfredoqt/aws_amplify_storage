@@ -18,6 +18,7 @@ A new flutter plugin project.
   s.dependency 'AWSS3', '~> 2.9.0'
   s.dependency 'AWSMobileClient', '~> 2.9.0'
 
-  s.ios.deployment_target = '8.0'
+  s.pod_target_xcconfig = { "DEFINES_MODULE" => "YES" }
+  s.ios.deployment_target = '9.0'
 end
 
