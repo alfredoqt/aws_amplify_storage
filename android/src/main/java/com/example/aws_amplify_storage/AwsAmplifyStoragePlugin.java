@@ -90,9 +90,6 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
             case "cancel":
                 handleCancel(call, result);
                 break;
-            case "stopListeningTransferState":
-                handleStopListeningTransferState(call, result);
-                break;
             default:
                 result.notImplemented();
                 break;
@@ -145,18 +142,6 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
         result.success(cancelled);
     }
 
-    private void handleStopListeningTransferState(MethodCall call, Result result) {
-        Map<String, Integer> arguments = call.arguments();
-        int id = arguments.get("id");
-        TransferObserver observer = mTransferUtility.getTransferById(id);
-        if (observer == null) {
-            result.success(null);
-            return;
-        }
-        observer.cleanTransferListener();
-        result.success(observer.getId());
-    }
-
     private int getTransferProgress(TransferObserver transferObserver) {
         return (int) (transferObserver.getBytesTransferred() / transferObserver.getBytesTotal() * 100);
     }
@@ -167,34 +152,6 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
             public void onStateChanged(int id, TransferState state) {
                 Map<String, Object> map = new HashMap<>();
                 switch (state) {
-                    /* A transfer is initially in WAITING state when added */
-                    case WAITING:
-                        map.put("id", id);
-                        map.put("transferState", "WAITING");
-                        map.put("progress", getTransferProgress(observer));
-                        mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
-                        break;
-                    /* It will turn into IN_PROGRESS once it starts */
-                    case IN_PROGRESS:
-                        map.put("id", id);
-                        map.put("transferState", "IN_PROGRESS");
-                        map.put("progress", getTransferProgress(observer));
-                        mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
-                        break;
-                    /* Customers can pause the transfer when needed and turns it into PAUSED */
-                    case PAUSED:
-                        map.put("id", id);
-                        map.put("transferState", "PAUSED");
-                        map.put("progress", getTransferProgress(observer));
-                        mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
-                        break;
-                    /* Customers can cancel the transfer when needed and turns it into CANCELED */
-                    case CANCELED:
-                        map.put("id", id);
-                        map.put("transferState", "CANCELED");
-                        map.put("progress", getTransferProgress(observer));
-                        mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
-                        break;
                     /* Finally the transfer will succeed as COMPLETED */
                     case COMPLETED:
                         map.put("id", id);
@@ -202,20 +159,13 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
                         map.put("progress", getTransferProgress(observer));
                         mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
                         break;
-                    /* Finally the transfer will fail as FAILED */
+                    /* The API will change and will no longer ignore these states */
                     case FAILED:
-                        map.put("id", id);
-                        map.put("transferState", "FAILED");
-                        map.put("progress", getTransferProgress(observer));
-                        mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
-                        break;
-                    /* WAITING_FOR_NETWORK state may kick in for an active transfer when network is lost */
+                    case PAUSED:
+                    case WAITING:
+                    case CANCELED:
+                    case IN_PROGRESS:
                     case WAITING_FOR_NETWORK:
-                        map.put("id", id);
-                        map.put("transferState", "WAITING_FOR_NETWORK");
-                        map.put("progress", getTransferProgress(observer));
-                        mChannel.invokeMethod("onTransferStateChanged", Collections.unmodifiableMap(map));
-                        break;
                     /* The following states are used internally and there should be no need to use this states */
                     case PENDING_PAUSE:
                     case RESUMED_WAITING:
