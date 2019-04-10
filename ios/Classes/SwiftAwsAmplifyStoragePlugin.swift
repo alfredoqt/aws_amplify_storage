@@ -21,7 +21,7 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
         AWSMobileClient.sharedInstance().initialize { (userState, error) in
             if userState != nil {
                 DispatchQueue.main.async {
-                    let configuration = AWSServiceConfiguration(region: .EUWest2, credentialsProvider: AWSMobileClient.sharedInstance())
+                    let configuration = AWSServiceConfiguration(region: .USWest2, credentialsProvider: AWSMobileClient.sharedInstance())
                     AWSS3TransferUtility.register(with: configuration!, forKey: "transfer-utility") { (errorTransfer) in
                         if let errorTransfer = errorTransfer {
                             print(errorTransfer.localizedDescription)
