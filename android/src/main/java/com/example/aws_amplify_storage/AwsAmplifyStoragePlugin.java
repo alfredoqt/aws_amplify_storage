@@ -90,6 +90,8 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
             case "cancel":
                 handleCancel(call, result);
                 break;
+            case "startListeningTransferState":
+                handleStartListeningTransferState(call, result);
             case "stopListeningTransferState":
                 handleStopListeningTransferState(call, result);
                 break;
@@ -105,8 +107,6 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
         String bucketKey = arguments.get("bucketKey");
         String pathname = arguments.get("pathname");
         final TransferObserver observer = mTransferUtility.upload(bucket, bucketKey, new File(pathname));
-
-        observer.setTransferListener(createTransferListener(observer));
         result.success(observer.getId());
     }
 
@@ -116,7 +116,6 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
         String bucketKey = arguments.get("bucketKey");
         String pathname = arguments.get("pathname");
         final TransferObserver observer = mTransferUtility.download(bucket, bucketKey, new File(pathname));
-        observer.setTransferListener(createTransferListener(observer));
         result.success(observer.getId());
     }
 
@@ -143,6 +142,18 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
         int id = arguments.get("id");
         boolean cancelled = mTransferUtility.cancel(id);
         result.success(cancelled);
+    }
+
+    private void handleStartListeningTransferState(MethodCall call, Result result) {
+        Map<String, Integer> arguments = call.arguments();
+        int id = arguments.get("id");
+        final TransferObserver observer = mTransferUtility.getTransferById(id);
+        if (observer == null) {
+            result.success(null);
+            return;
+        }
+        observer.setTransferListener(createTransferListener(observer));
+        result.success(observer.getId());
     }
 
     private void handleStopListeningTransferState(MethodCall call, Result result) {

@@ -53,6 +53,9 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
         case "cancel":
             handleCancel(call: call, result: result)
             break
+        case "startListeningTransferState":
+            handleStartListeningTransferState(call: call, result: result)
+            break
         case "stopListeningTransferState":
             handleStopListeningTransferState(call: call, result: result)
             break
@@ -66,51 +69,24 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
         let arguments = call.arguments as! Dictionary<String, String>
         let transferUtility = AWSS3TransferUtility.s3TransferUtility(forKey: "transfer-utility")
         
-        let expression = AWSS3TransferUtilityUploadExpression()
-        
-        expression.progressBlock = {(task, progress) in
-            print("Progress Block \(task.status)")
-            DispatchQueue.main.async {
-                let fractionCompleted = Int(progress.fractionCompleted * 100)
-                var map: [String: Any] = [:]
-                map["id"] = Int(task.taskIdentifier)
-                map["transferState"] = "PROGRESS_CHANGED"
-                map["progress"] = fractionCompleted
-                self.channel.invokeMethod("onTransferStateChanged", arguments: map)
-            }
-        }
-        
-        var completionHandler: AWSS3TransferUtilityUploadCompletionHandlerBlock?
-        completionHandler = { (task, error) -> Void in
-            print("Completion handler \(task.status)")
-            DispatchQueue.main.async {
-                if let _ = error {
-                    var map: [String: Any] = [:]
-                    map["id"] = Int(task.taskIdentifier)
-                    map["transferState"] = "ERROR"
-                    map["progress"] = -1
-                    self.channel.invokeMethod("onTransferStateChanged", arguments: map)
-                } else {
-                    var map: [String: Any] = [:]
-                    map["id"] = Int(task.taskIdentifier)
-                    map["transferState"] = "COMPLETED"
-                    map["progress"] = Int(task.progress.fractionCompleted * 100)
-                    self.channel.invokeMethod("onTransferStateChanged", arguments: map)
-                }
-            }
-        }
-        
         if let transferUtility = transferUtility {
             if let pathname = arguments["pathname"], let bucket = arguments["bucket"], let bucketKey = arguments["bucketKey"], let contentType = arguments["contentType"] {
+                let expression = AWSS3TransferUtilityUploadExpression()
+                
                 let fileUrl = URL(fileURLWithPath: pathname)
-                transferUtility.uploadFile(fileUrl, bucket: bucket, key: bucketKey, contentType: contentType, expression: expression, completionHandler: completionHandler).continueWith { (task) -> AnyObject? in
+                transferUtility.uploadFile(fileUrl, bucket: bucket, key: bucketKey, contentType: contentType, expression: expression, completionHandler: nil).continueWith { (task) -> AnyObject? in
                     if let error = task.error {
                         print("Error: \(error.localizedDescription)")
+                        result(FlutterError(code: "TRANSFER_INIT_FAILED", message: error.localizedDescription, details: nil))
+                        return nil
                     }
                     
                     if let uploadTask = task.result {
                         self.taskMap[uploadTask.taskIdentifier] = uploadTask
+                        result(Int(uploadTask.taskIdentifier))
+                        return nil
                     }
+                    result(nil)
                     return nil;
                 }
             }
@@ -121,52 +97,25 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
         let arguments = call.arguments as! Dictionary<String, String>
         let transferUtility = AWSS3TransferUtility.s3TransferUtility(forKey: "transfer-utility")
         
-        let expression = AWSS3TransferUtilityDownloadExpression()
-        
-        expression.progressBlock = {(task, progress) in
-            print("Progress Block \(task.status)")
-            DispatchQueue.main.async {
-                let fractionCompleted = Int(progress.fractionCompleted * 100)
-                var map: [String: Any] = [:]
-                map["id"] = Int(task.taskIdentifier)
-                map["transferState"] = "PROGRESS_CHANGED"
-                map["progress"] = fractionCompleted
-                self.channel.invokeMethod("onTransferStateChanged", arguments: map)
-            }
-        }
-        
-        var completionHandler: AWSS3TransferUtilityDownloadCompletionHandlerBlock?
-        completionHandler = { (task, URL, data, error) -> Void in
-            print("Completion handler \(task.status)")
-            DispatchQueue.main.async {
-                if let _ = error {
-                    var map: [String: Any] = [:]
-                    map["id"] = Int(task.taskIdentifier)
-                    map["transferState"] = "ERROR"
-                    map["progress"] = -1
-                    self.channel.invokeMethod("onTransferStateChanged", arguments: map)
-                } else {
-                    var map: [String: Any] = [:]
-                    map["id"] = Int(task.taskIdentifier)
-                    map["transferState"] = "COMPLETED"
-                    map["progress"] = Int(task.progress.fractionCompleted * 100)
-                    self.channel.invokeMethod("onTransferStateChanged", arguments: map)
-                }
-            }
-        }
-        
         if let transferUtility = transferUtility {
             if let pathname = arguments["pathname"], let bucket = arguments["bucket"], let bucketKey = arguments["bucketKey"] {
+                let expression = AWSS3TransferUtilityDownloadExpression()
+                
                 let fileUrl = URL(fileURLWithPath: pathname)
-                transferUtility.download(to: fileUrl, bucket: bucket, key: bucketKey, expression: expression, completionHandler: completionHandler).continueWith {
+                transferUtility.download(to: fileUrl, bucket: bucket, key: bucketKey, expression: expression, completionHandler: nil).continueWith {
                     (task) -> AnyObject? in
                     if let error = task.error {
                         print("Error: \(error.localizedDescription)")
+                        result(FlutterError(code: "TRANSFER_INIT_FAILED", message: error.localizedDescription, details: nil))
+                        return nil
                     }
                     
                     if let downloadTask = task.result {
                         self.taskMap[downloadTask.taskIdentifier] = downloadTask
+                        result(Int(downloadTask.taskIdentifier))
+                        return nil
                     }
+                    result(nil)
                     return nil
                 }
                 
@@ -195,7 +144,7 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
             let parsedId = UInt(id)
             if let task = taskMap[parsedId] {
                 task.resume()
-                result(id)
+                result(Int(task.taskIdentifier))
                 return
             }
             result(nil)
@@ -219,13 +168,96 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
         result(false)
     }
     
+    func handleStartListeningTransferState(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        let arguments = call.arguments as! Dictionary<String, Int>
+        if let id = arguments["id"] {
+            let parsedId = UInt(id)
+            if let task = taskMap[parsedId] {
+                
+                if let taskUpload = task as? AWSS3TransferUtilityUploadTask {
+                    let progressBlock: AWSS3TransferUtilityProgressBlock = {(task, progress) in
+                        DispatchQueue.main.async {
+                            print("Progress Block \(task.status)")
+                            let fractionCompleted = Int(progress.fractionCompleted * 100)
+                            var map: [String: Any] = [:]
+                            map["id"] = Int(taskUpload.taskIdentifier)
+                            map["transferState"] = "PROGRESS_CHANGED"
+                            map["progress"] = fractionCompleted
+                            self.channel.invokeMethod("onTransferStateChanged", arguments: map)
+                        }
+                    }
+                    let completionHandler: AWSS3TransferUtilityUploadCompletionHandlerBlock = { (task, error) -> Void in
+                        DispatchQueue.main.async {
+                            if let _ = error {
+                                var map: [String: Any] = [:]
+                                map["id"] = Int(taskUpload.taskIdentifier)
+                                map["transferState"] = "ERROR"
+                                map["progress"] = -1
+                                self.channel.invokeMethod("onTransferStateChanged", arguments: map)
+                            } else {
+                                var map: [String: Any] = [:]
+                                map["id"] = Int(taskUpload.taskIdentifier)
+                                map["transferState"] = "COMPLETED"
+                                map["progress"] = Int(taskUpload.progress.fractionCompleted * 100)
+                                self.channel.invokeMethod("onTransferStateChanged", arguments: map)
+                            }
+                        }
+                    }
+                    taskUpload.setCompletionHandler(completionHandler)
+                    taskUpload.setProgressBlock(progressBlock)
+                    result(Int(taskUpload.taskIdentifier))
+                    return
+                }
+                if let taskDownload = task as? AWSS3TransferUtilityDownloadTask {
+                    let progressBlock: AWSS3TransferUtilityProgressBlock = {(task, progress) in
+                        DispatchQueue.main.async {
+                            print("Progress Block \(task.status)")
+                            let fractionCompleted = Int(progress.fractionCompleted * 100)
+                            var map: [String: Any] = [:]
+                            map["id"] = Int(taskDownload.taskIdentifier)
+                            map["transferState"] = "PROGRESS_CHANGED"
+                            map["progress"] = fractionCompleted
+                            self.channel.invokeMethod("onTransferStateChanged", arguments: map)
+                        }
+                    }
+                    let completionHandler: AWSS3TransferUtilityDownloadCompletionHandlerBlock = { (task, URL, data, error) -> Void in
+                        DispatchQueue.main.async {
+                            if let _ = error {
+                                var map: [String: Any] = [:]
+                                map["id"] = Int(taskDownload.taskIdentifier)
+                                map["transferState"] = "ERROR"
+                                map["progress"] = -1
+                                self.channel.invokeMethod("onTransferStateChanged", arguments: map)
+                            } else {
+                                var map: [String: Any] = [:]
+                                map["id"] = Int(taskDownload.taskIdentifier)
+                                map["transferState"] = "COMPLETED"
+                                map["progress"] = Int(taskDownload.progress.fractionCompleted * 100)
+                                self.channel.invokeMethod("onTransferStateChanged", arguments: map)
+                            }
+                        }
+                    }
+                    taskDownload.setCompletionHandler(completionHandler)
+                    taskDownload.setProgressBlock(progressBlock)
+                    result(Int(taskDownload.taskIdentifier))
+                    return
+                }
+                result(nil)
+                return
+            }
+            result(nil)
+            return
+        }
+        result(nil)
+    }
+    
     func handleStopListeningTransferState(call: FlutterMethodCall, result: @escaping FlutterResult) {
         let arguments = call.arguments as! Dictionary<String, Int>
         if let id = arguments["id"] {
             let parsedId = UInt(id)
             if let task = taskMap[parsedId] {
                 // TODO: Check how to do a proper cleanup
-                result(id)
+                result(Int(task.taskIdentifier))
                 return
             }
             result(nil)
