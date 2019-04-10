@@ -90,6 +90,9 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
             case "cancel":
                 handleCancel(call, result);
                 break;
+            case "stopListeningTransferState":
+                handleStopListeningTransferState(call, result);
+                break;
             default:
                 result.notImplemented();
                 break;
@@ -140,6 +143,18 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
         int id = arguments.get("id");
         boolean cancelled = mTransferUtility.cancel(id);
         result.success(cancelled);
+    }
+
+    private void handleStopListeningTransferState(MethodCall call, Result result) {
+        Map<String, Integer> arguments = call.arguments();
+        int id = arguments.get("id");
+        TransferObserver observer = mTransferUtility.getTransferById(id);
+        if (observer == null) {
+            result.success(null);
+            return;
+        }
+        observer.cleanTransferListener();
+        result.success(observer.getId());
     }
 
     private int getTransferProgress(TransferObserver transferObserver) {

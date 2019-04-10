@@ -53,6 +53,9 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
         case "cancel":
             handleCancel(call: call, result: result)
             break
+        case "stopListeningTransferState":
+            handleStopListeningTransferState(call: call, result: result)
+            break
         default:
             result(FlutterMethodNotImplemented)
             break
@@ -214,6 +217,21 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
             return
         }
         result(false)
+    }
+    
+    func handleStopListeningTransferState(call: FlutterMethodCall, result: @escaping FlutterResult) {
+        let arguments = call.arguments as! Dictionary<String, Int>
+        if let id = arguments["id"] {
+            let parsedId = UInt(id)
+            if let task = taskMap[parsedId] {
+                // TODO: Check how to do a proper cleanup
+                result(id)
+                return
+            }
+            result(nil)
+            return
+        }
+        result(nil)
     }
     
 }
