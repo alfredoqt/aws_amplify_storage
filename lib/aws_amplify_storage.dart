@@ -93,6 +93,7 @@ class AwsAmplifyStorage {
         await _channel.invokeMethod(
             'stopListeningTransferState', <String, int>{'id': id});
         _transferStateChangedControllers.remove(handle);
+        controller.close();
       });
     });
     return controller.stream;
