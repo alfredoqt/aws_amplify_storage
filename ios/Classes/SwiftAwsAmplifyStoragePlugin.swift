@@ -26,7 +26,8 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
                         if let errorTransfer = errorTransfer {
                             print("Error: \(errorTransfer.localizedDescription)")
                         }
-                        print("Success: \(configuration.debugDescription)")
+                        print("Success: \(AWSMobileClient.sharedInstance().identityId)")
+                        print("Success: \(errorTransfer.debugDescription)")
                     }
                 }
             } else if let error = error {
