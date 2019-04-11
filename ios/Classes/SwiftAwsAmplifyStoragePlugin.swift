@@ -24,12 +24,13 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
                     let configuration = AWSServiceConfiguration(region: .USWest2, credentialsProvider: AWSMobileClient.sharedInstance())
                     AWSS3TransferUtility.register(with: configuration!, forKey: "transfer-utility") { (errorTransfer) in
                         if let errorTransfer = errorTransfer {
-                            print(errorTransfer.localizedDescription)
+                            print("Error: \(errorTransfer.localizedDescription)")
                         }
+                        print("Success: \(configuration.debugDescription)")
                     }
                 }
             } else if let error = error {
-                print(error.localizedDescription)
+                print("Error: \(error.localizedDescription)")
             }
         }
         
@@ -82,6 +83,7 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
                     }
                     
                     if let uploadTask = task.result {
+                        print("Success: \(uploadTask.taskIdentifier)")
                         self.taskMap[uploadTask.taskIdentifier] = uploadTask
                         result(Int(uploadTask.taskIdentifier))
                         return nil
@@ -111,6 +113,7 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
                     }
                     
                     if let downloadTask = task.result {
+                        print("Success: \(downloadTask.taskIdentifier)")
                         self.taskMap[downloadTask.taskIdentifier] = downloadTask
                         result(Int(downloadTask.taskIdentifier))
                         return nil
