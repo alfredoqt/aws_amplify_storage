@@ -103,17 +103,19 @@ public class AwsAmplifyStoragePlugin implements MethodCallHandler {
 
     private void handleUpload(MethodCall call, Result result) {
         Map<String, String> arguments = call.arguments();
+        String bucket = arguments.get("bucket");
         String bucketKey = arguments.get("bucketKey");
         String pathname = arguments.get("pathname");
-        final TransferObserver observer = mTransferUtility.upload(bucketKey, new File(pathname));
+        final TransferObserver observer = mTransferUtility.upload(bucket, bucketKey, new File(pathname));
         result.success(observer.getId());
     }
 
     private void handleDownload(MethodCall call, Result result) {
         Map<String, String> arguments = call.arguments();
+        String bucket = arguments.get("bucket");
         String bucketKey = arguments.get("bucketKey");
         String pathname = arguments.get("pathname");
-        final TransferObserver observer = mTransferUtility.download(bucketKey, new File(pathname));
+        final TransferObserver observer = mTransferUtility.download(bucket, bucketKey, new File(pathname));
         result.success(observer.getId());
     }
 
