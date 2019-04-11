@@ -17,21 +17,11 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
     init(registrar: FlutterPluginRegistrar, channel: FlutterMethodChannel) {
         self.registrar = registrar
         self.channel = channel
-        
-        AWSMobileClient.sharedInstance().initialize { (userState, error) in
-            if userState != nil {
-                DispatchQueue.main.async {
-                    let configuration = AWSServiceConfiguration(region: .USWest2, credentialsProvider: AWSMobileClient.sharedInstance())
-                    AWSS3TransferUtility.register(with: configuration!, forKey: "transfer-utility") { (errorTransfer) in
-                        if let errorTransfer = errorTransfer {
-                            print("Error: \(errorTransfer.localizedDescription)")
-                        }
-                        print("Success: \(AWSMobileClient.sharedInstance().identityId)")
-                        print("Success: \(errorTransfer.debugDescription)")
-                    }
-                }
-            } else if let error = error {
-                print("Error: \(error.localizedDescription)")
+        let credentialProvider = AWSCognitoCredentialsProvider(regionType: .USWest2, identityPoolId: "us-west-2:f94fa2e3-ca0c-4339-bcfa-6c36b71aee75")
+        let configuration = AWSServiceConfiguration(region: .USWest2, credentialsProvider: credentialProvider)
+        AWSS3TransferUtility.register(with: configuration!, forKey: "transfer-utility") { (errorTransfer) in
+            if let errorTransfer = errorTransfer {
+                print("Error: \(errorTransfer.localizedDescription)")
             }
         }
         
