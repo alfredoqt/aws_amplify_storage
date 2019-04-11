@@ -35,12 +35,10 @@ class AwsAmplifyStorage {
   static final AwsAmplifyStorage instance = AwsAmplifyStorage._();
 
   Future<int> upload(
-      {@required String bucket,
-      @required String bucketKey,
+      {@required String bucketKey,
       @required String pathname,
       @required String contentType}) {
     return _channel.invokeMethod('upload', <String, String>{
-      'bucket': bucket,
       'bucketKey': bucketKey,
       'pathname': pathname,
       'contentType': contentType,
@@ -48,11 +46,8 @@ class AwsAmplifyStorage {
   }
 
   Future<int> download(
-      {@required String bucket,
-      @required String bucketKey,
-      @required String pathname}) {
+      {@required String bucketKey, @required String pathname}) {
     return _channel.invokeMethod('download', <String, String>{
-      'bucket': bucket,
       'bucketKey': bucketKey,
       'pathname': pathname,
     });

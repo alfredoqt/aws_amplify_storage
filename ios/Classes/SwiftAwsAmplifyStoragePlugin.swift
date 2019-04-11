@@ -72,11 +72,11 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
         let transferUtility = AWSS3TransferUtility.s3TransferUtility(forKey: "transfer-utility")
         
         if let transferUtility = transferUtility {
-            if let pathname = arguments["pathname"], let bucket = arguments["bucket"], let bucketKey = arguments["bucketKey"], let contentType = arguments["contentType"] {
+            if let pathname = arguments["pathname"], let bucketKey = arguments["bucketKey"], let contentType = arguments["contentType"] {
                 let expression = AWSS3TransferUtilityUploadExpression()
                 
                 let fileUrl = URL(fileURLWithPath: pathname)
-                transferUtility.uploadFile(fileUrl, bucket: bucket, key: bucketKey, contentType: contentType, expression: expression, completionHandler: nil).continueWith { (task) -> AnyObject? in
+                transferUtility.uploadFile(fileUrl, key: bucketKey, contentType: contentType, expression: expression, completionHandler: nil).continueWith { (task) -> AnyObject? in
                     if let error = task.error {
                         print("Error: \(error.localizedDescription)")
                         result(FlutterError(code: "TRANSFER_INIT_FAILED", message: error.localizedDescription, details: nil))
@@ -101,11 +101,11 @@ public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
         let transferUtility = AWSS3TransferUtility.s3TransferUtility(forKey: "transfer-utility")
         
         if let transferUtility = transferUtility {
-            if let pathname = arguments["pathname"], let bucket = arguments["bucket"], let bucketKey = arguments["bucketKey"] {
+            if let pathname = arguments["pathname"], let bucketKey = arguments["bucketKey"] {
                 let expression = AWSS3TransferUtilityDownloadExpression()
                 
                 let fileUrl = URL(fileURLWithPath: pathname)
-                transferUtility.download(to: fileUrl, bucket: bucket, key: bucketKey, expression: expression, completionHandler: nil).continueWith {
+                transferUtility.download(to: fileUrl, key: bucketKey, expression: expression, completionHandler: nil).continueWith {
                     (task) -> AnyObject? in
                     if let error = task.error {
                         print("Error: \(error.localizedDescription)")
