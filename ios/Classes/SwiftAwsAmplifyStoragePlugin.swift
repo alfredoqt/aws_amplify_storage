@@ -1,7 +1,6 @@
 import Flutter
 import UIKit
 import AWSS3
-import AWSMobileClient
 
 public class SwiftAwsAmplifyStoragePlugin: NSObject, FlutterPlugin {
     var registrar: FlutterPluginRegistrar!
