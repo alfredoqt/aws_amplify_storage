@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aws_amplify_storage/aws_amplify_storage.dart';
+// import 'package:aws_amplify_storage/aws_amplify_storage.dart';
 
 void main() {
   const MethodChannel channel = MethodChannel('aws_amplify_storage');
@@ -15,7 +15,7 @@ void main() {
     channel.setMockMethodCallHandler(null);
   });
 
-  test('getPlatformVersion', () async {
-    expect(await AwsAmplifyStorage.platformVersion, '42');
-  });
+  // test('getPlatformVersion', () async {
+  //   expect(await AwsAmplifyStorage.platformVersion, '42');
+  // });
 }
