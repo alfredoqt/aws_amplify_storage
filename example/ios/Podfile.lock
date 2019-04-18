@@ -1,0 +1,33 @@
+PODS:
+  - aws_amplify_storage (0.0.1):
+    - AWSS3 (~> 2.9.0)
+    - Flutter
+  - AWSCore (2.9.4)
+  - AWSS3 (2.9.4):
+    - AWSCore (= 2.9.4)
+  - Flutter (1.0.0)
+
+DEPENDENCIES:
+  - aws_amplify_storage (from `.symlinks/plugins/aws_amplify_storage/ios`)
+  - Flutter (from `.symlinks/flutter/ios-release`)
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - AWSCore
+    - AWSS3
+
+EXTERNAL SOURCES:
+  aws_amplify_storage:
+    :path: ".symlinks/plugins/aws_amplify_storage/ios"
+  Flutter:
+    :path: ".symlinks/flutter/ios-release"
+
+SPEC CHECKSUMS:
+  aws_amplify_storage: 44ca63a21da66a18638615df4015862f0443d2ec
+  AWSCore: 8539eaa1d687d50b6b127db5cb600e4c6b37cd4e
+  AWSS3: fe1b6c1880dde60c33e6c1afcf23c3a805c99a49
+  Flutter: 58dd7d1b27887414a370fcccb9e645c08ffd7a6a
+
+PODFILE CHECKSUM: aff02bfeed411c636180d6812254b2daeea14d09
+
+COCOAPODS: 1.6.1
