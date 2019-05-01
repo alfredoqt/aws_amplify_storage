@@ -31,4 +31,9 @@ android {
     lintOptions {
         disable 'InvalidPackage'
     }
+    dependencies {
+        api 'com.amazonaws:aws-android-sdk-s3:2.13.+'
+        api ('com.amazonaws:aws-android-sdk-mobile-client:2.13.+@aar') { transitive = true }
+        api ('com.amazonaws:aws-android-sdk-auth-userpools:2.13.+@aar') { transitive = true }
+    }
 }
