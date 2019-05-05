@@ -21,7 +21,7 @@
 - (instancetype)initWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
     self = [super init];
     if (self) {
-        NSString* awsConfigJsonKey = [registrar lookupKeyForAsset:@"configuration/awsconfiguration.json"];
+        NSString* awsConfigJsonKey = [registrar lookupKeyForAsset:@"assets/configuration/awsconfiguration.json"];
         NSString* pathToAWSConfigJson = [[NSBundle mainBundle] pathForResource:awsConfigJsonKey ofType:@"json"];
         NSLog(@"Configuration '%@'", pathToAWSConfigJson);
         AWSCognitoCredentialsProvider* credentialsProvider = [[AWSCognitoCredentialsProvider alloc] initWithRegionType:AWSRegionUSWest2 identityPoolId:@"us-west-2:bfae5467-d7c7-4b54-b940-c30d7303767a"];
