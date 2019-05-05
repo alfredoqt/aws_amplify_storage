@@ -12,7 +12,7 @@ class TransferInfo {
 
   String get transferState => _data["transferState"];
 
-  int get progress => _data["progress"];
+  double get progress => _data["progress"];
 
   String get location => _data["location"];
 
