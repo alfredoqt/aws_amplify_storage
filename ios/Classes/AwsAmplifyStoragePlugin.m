@@ -22,7 +22,8 @@
     self = [super init];
     if (self) {
         NSString* awsConfigJsonKey = [registrar lookupKeyForAsset:@"assets/configuration/awsconfiguration.json"];
-        NSString* pathToAWSConfigJson = [[NSBundle mainBundle] pathForResource:awsConfigJsonKey ofType:@"json"];
+        NSLog(@"Configuration Key '%@'", awsConfigJsonKey);
+        NSString* pathToAWSConfigJson = [[NSBundle mainBundle] pathForResource:awsConfigJsonKey ofType:nil];
         NSLog(@"Configuration '%@'", pathToAWSConfigJson);
         AWSCognitoCredentialsProvider* credentialsProvider = [[AWSCognitoCredentialsProvider alloc] initWithRegionType:AWSRegionUSWest2 identityPoolId:@"us-west-2:bfae5467-d7c7-4b54-b940-c30d7303767a"];
         AWSServiceConfiguration* configuration = [[AWSServiceConfiguration alloc] initWithRegion:AWSRegionUSWest2 credentialsProvider:credentialsProvider];
