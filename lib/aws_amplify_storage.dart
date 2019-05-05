@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class TransferInfo {
-  final Map<String, dynamic> _data;
+  final Map<dynamic, dynamic> _data;
 
   TransferInfo._(this._data);
 
