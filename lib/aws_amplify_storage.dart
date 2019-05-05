@@ -81,7 +81,7 @@ class AwsAmplifyStorage {
     });
   }
 
-  Stream<TransferInfo> onTransferStateChanged({@required id}) {
+  Stream<TransferInfo> onTransferStateChanged({@required int id}) {
     // The id of the transfer returned by invoking the method
     Future<int> _handle;
     StreamController<TransferInfo> controller;
