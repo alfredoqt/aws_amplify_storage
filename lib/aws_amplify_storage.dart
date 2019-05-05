@@ -113,7 +113,7 @@ class AwsAmplifyStorage {
   }
 
   void _onTransferStateChangedHandler(MethodCall call) {
-    final Map<String, dynamic> data = call.arguments;
+    final Map<dynamic, dynamic> data = call.arguments;
 
     final transferInfo = TransferInfo._(data);
 
