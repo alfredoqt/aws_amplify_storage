@@ -22,9 +22,17 @@
     self = [super init];
     if (self) {
         NSString* awsConfigJsonKey = [registrar lookupKeyForAsset:@"assets/configuration/awsconfiguration.json"];
-        NSLog(@"Configuration Key '%@'", awsConfigJsonKey);
         NSString* pathToAWSConfigJson = [[NSBundle mainBundle] pathForResource:awsConfigJsonKey ofType:nil];
-        NSLog(@"Configuration '%@'", pathToAWSConfigJson);
+        NSData* configData = [NSData dataWithContentsOfFile:pathToAWSConfigJson];
+        NSError* configJsonError = nil;
+        NSDictionary <NSString *, id>* configJsonDictionary = [NSJSONSerialization JSONObjectWithData:configData options:kNilOptions error:&configJsonError];
+        NSDictionary <NSString *, id> *defaultCredentialsProviderDictionary = [[[configJsonDictionary objectForKey:@"CredentialsProvider"] objectForKey:@"CognitoIdentity"] objectForKey:@"Default"];
+        NSString *cognitoIdentityPoolID = [defaultCredentialsProviderDictionary objectForKey:@"PoolId"];
+        AWSRegionType cognitoIdentityRegion =  [[defaultCredentialsProviderDictionary objectForKey:@"Region"] aws_regionTypeValue];
+        
+        NSLog(@"Cognito Identity Pool ID '%@'", cognitoIdentityPoolID);
+        NSLog(@"Cognito Identity Region '%ld'", (long)cognitoIdentityRegion);
+
         AWSCognitoCredentialsProvider* credentialsProvider = [[AWSCognitoCredentialsProvider alloc] initWithRegionType:AWSRegionUSWest2 identityPoolId:@"us-west-2:bfae5467-d7c7-4b54-b940-c30d7303767a"];
         AWSServiceConfiguration* configuration = [[AWSServiceConfiguration alloc] initWithRegion:AWSRegionUSWest2 credentialsProvider:credentialsProvider];
         [AWSS3TransferUtility registerS3TransferUtilityWithConfiguration:configuration forKey:@"transfer-utility" completionHandler:^(NSError* error) {
