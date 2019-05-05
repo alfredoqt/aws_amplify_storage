@@ -22,7 +22,7 @@
     self = [super init];
     if (self) {
         NSString* pathToAWSConfigJson = [[NSBundle mainBundle] pathForResource:@"awsconfiguration" ofType:@"json"];
-        NSLog(pathToAWSConfigJson);
+        NSLog(@"Configuration '@'", pathToAWSConfigJson);
         AWSCognitoCredentialsProvider* credentialsProvider = [[AWSCognitoCredentialsProvider alloc] initWithRegionType:AWSRegionUSWest2 identityPoolId:@"us-west-2:bfae5467-d7c7-4b54-b940-c30d7303767a"];
         AWSServiceConfiguration* configuration = [[AWSServiceConfiguration alloc] initWithRegion:AWSRegionUSWest2 credentialsProvider:credentialsProvider];
         [AWSS3TransferUtility registerS3TransferUtilityWithConfiguration:configuration forKey:@"transfer-utility" completionHandler:^(NSError* error) {
