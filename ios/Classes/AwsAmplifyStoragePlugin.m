@@ -29,12 +29,9 @@
         NSDictionary <NSString *, id> *defaultCredentialsProviderDictionary = [[[configJsonDictionary objectForKey:@"CredentialsProvider"] objectForKey:@"CognitoIdentity"] objectForKey:@"Default"];
         NSString *cognitoIdentityPoolID = [defaultCredentialsProviderDictionary objectForKey:@"PoolId"];
         AWSRegionType cognitoIdentityRegion =  [[defaultCredentialsProviderDictionary objectForKey:@"Region"] aws_regionTypeValue];
-        
-        NSLog(@"Cognito Identity Pool ID '%@'", cognitoIdentityPoolID);
-        NSLog(@"Cognito Identity Region '%ld'", (long)cognitoIdentityRegion);
 
-        AWSCognitoCredentialsProvider* credentialsProvider = [[AWSCognitoCredentialsProvider alloc] initWithRegionType:AWSRegionUSWest2 identityPoolId:@"us-west-2:bfae5467-d7c7-4b54-b940-c30d7303767a"];
-        AWSServiceConfiguration* configuration = [[AWSServiceConfiguration alloc] initWithRegion:AWSRegionUSWest2 credentialsProvider:credentialsProvider];
+        AWSCognitoCredentialsProvider* credentialsProvider = [[AWSCognitoCredentialsProvider alloc] initWithRegionType:cognitoIdentityRegion identityPoolId:cognitoIdentityPoolID];
+        AWSServiceConfiguration* configuration = [[AWSServiceConfiguration alloc] initWithRegion:cognitoIdentityRegion credentialsProvider:credentialsProvider];
         [AWSS3TransferUtility registerS3TransferUtilityWithConfiguration:configuration forKey:@"transfer-utility" completionHandler:^(NSError* error) {
             if (error) {
                 NSLog(@"Error '%@'", error.localizedDescription);
